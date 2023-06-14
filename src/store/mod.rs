@@ -13,6 +13,7 @@ use crate::crypt::crypt;
 
 pub mod shadow;
 
+/// Read shadow items from the shadow file.
 fn read_shadow() -> Result<Vec<Shadow>> {
     let shadow_file = File::options().read(true).open("shadow")?;
     let reader = BufReader::new(shadow_file);
@@ -23,6 +24,7 @@ fn read_shadow() -> Result<Vec<Shadow>> {
         .collect())
 }
 
+/// Write shadow items to the shadow file.
 pub fn write_shadow(shadow_items: &[Shadow]) -> Result<()> {
     let shadow_file = File::options()
         .truncate(true)
@@ -36,6 +38,7 @@ pub fn write_shadow(shadow_items: &[Shadow]) -> Result<()> {
     Ok(())
 }
 
+/// Check if user has password using the shadow file.
 pub fn user_has_password(username: &str) -> Result<bool> {
     let shadow_item = read_shadow()?
         .into_iter()
@@ -44,6 +47,7 @@ pub fn user_has_password(username: &str) -> Result<bool> {
     Ok(shadow_item.hashed_password.is_some())
 }
 
+/// Verify password using the shadow file.
 pub fn verify_password(username: &str, password: &str) -> Result<()> {
     let shadow_item = read_shadow()?
         .into_iter()
@@ -63,6 +67,7 @@ pub fn verify_password(username: &str, password: &str) -> Result<()> {
     }
 }
 
+/// Update password in the shadow file.
 pub fn update_password(username: &str, hashed_password: &str) -> Result<()> {
     let mut shadow_items: Vec<_> = read_shadow()?.into_iter().collect();
     let shadow_item = shadow_items
@@ -74,6 +79,7 @@ pub fn update_password(username: &str, hashed_password: &str) -> Result<()> {
     Ok(())
 }
 
+/// Lock account by changing password in the shadow file.
 pub fn lock_account(username: &str) -> Result<()> {
     let mut shadow_items: Vec<_> = read_shadow()?.into_iter().collect();
     let shadow_item = shadow_items
@@ -82,12 +88,15 @@ pub fn lock_account(username: &str) -> Result<()> {
         .ok_or_else(|| Error::msg("No such user in database"))?;
     match &shadow_item.hashed_password {
         None => shadow_item.update_password(Some("!".to_string())),
-        Some(s) => shadow_item.update_password(Some(format!("!{}", s))),
+        Some(s) if !s.starts_with('!') => shadow_item.update_password(Some(format!("!{}", s))),
+        // Already locked, do nothing.
+        _ => {}
     }
     write_shadow(&shadow_items)?;
     Ok(())
 }
 
+/// Unlock account by changing password in the shadow file.
 pub fn unlock_account(username: &str) -> Result<()> {
     let mut shadow_items: Vec<_> = read_shadow()?.into_iter().collect();
     let shadow_item = shadow_items
@@ -104,6 +113,7 @@ pub fn unlock_account(username: &str) -> Result<()> {
     Ok(())
 }
 
+/// Delete a user's password in the shadow file.
 pub fn delete_password(username: &str) -> Result<()> {
     let mut shadow_items: Vec<_> = read_shadow()?.into_iter().collect();
     let shadow_item = shadow_items
@@ -115,7 +125,11 @@ pub fn delete_password(username: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn all_usernames() -> Result<Vec<String>> {
-    let shadow_items = read_shadow()?;
-    Ok(shadow_items.into_iter().map(|item| item.username).collect())
+/// Get all usernames from the shadow file.
+pub fn is_valid_user(username: &str) -> Result<bool> {
+    Ok(read_shadow()?
+        .into_iter()
+        .map(|item| item.username)
+        .find(|user| user == username)
+        .is_some())
 }

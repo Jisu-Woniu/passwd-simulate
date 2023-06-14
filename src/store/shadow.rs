@@ -4,24 +4,44 @@ use std::{
 };
 
 use anyhow::Error;
-use chrono::{Duration, NaiveDate};
+use chrono::{Duration, Local, NaiveDate};
 
+/// Shadow file entry
 #[derive(Debug, Clone)]
 pub struct Shadow {
+    /// Username
     pub(crate) username: String,
+
+    /// Hashed password. Normally, it should be result of crypt(), but can be anything else such as "!" for locked account.
     pub(crate) hashed_password: Option<String>,
+
+    /// Date of last password change, expressed as the number of days since Jan 1, 1970 in file.
     last_updated: Option<NaiveDate>,
+
+    /// Minimum number of days between password changes.
     min_age: Option<usize>,
+
+    /// Maximum number of days between password changes.
     max_age: Option<usize>,
+
+    /// Number of days before password expires to warn user to change it.
     warning_period: Option<usize>,
+
+    /// Number of days after password expires until account is disabled.
     inactivity_period: Option<usize>,
+
+    /// Date when account expires, expressed as the number of days since Jan 1, 1970 in file.
     account_exp_date: Option<NaiveDate>,
+
+    /// Reserved for future use.
     reserved: Option<String>,
 }
 
 impl Shadow {
+    /// Update password and set last_updated field accordingly.
     pub(crate) fn update_password(&mut self, new_hashed_password: Option<String>) {
         self.hashed_password = new_hashed_password;
+        self.last_updated = Some(Local::now().date_naive());
     }
 }
 

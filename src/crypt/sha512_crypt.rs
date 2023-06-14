@@ -85,6 +85,7 @@ pub(super) fn sha512_crypt(key: &[u8], setting: &[u8]) -> Result<String> {
     ))
 }
 
+/// Core hash function.
 fn sha512_crypt_clean(key: &[u8], salt: &[u8], rounds: usize) -> Option<String> {
     // B = sha(key salt key)
     let md = Sha512::new()
@@ -145,6 +146,7 @@ fn sha512_crypt_clean(key: &[u8], salt: &[u8], rounds: usize) -> Option<String> 
         }
         md = ctx.finalize();
     }
+
     const PERM: [[usize; 3]; 21] = [
         [0, 21, 42],
         [22, 43, 1],
@@ -170,14 +172,13 @@ fn sha512_crypt_clean(key: &[u8], salt: &[u8], rounds: usize) -> Option<String> 
     ];
     let mut output = Vec::new();
 
-    {
-        for p in &PERM {
-            output.extend(&to64(
-                ((md[p[0]] as u32) << 16) | ((md[p[1]] as u32) << 8) | (md[p[2]] as u32),
-                4,
-            ))
-        }
-    };
+    for p in &PERM {
+        output.extend(&to64(
+            ((md[p[0]] as u32) << 16) | ((md[p[1]] as u32) << 8) | (md[p[2]] as u32),
+            4,
+        ))
+    }
+
     output.extend(&to64(md[63] as u32, 2));
     String::from_utf8(output).ok()
 }

@@ -10,7 +10,7 @@ use users::{get_current_uid, get_current_username};
 use crypt::{crypt, salt::make_salt};
 
 use store::{
-    all_usernames, delete_password, lock_account, unlock_account, update_password,
+    delete_password, is_valid_user, lock_account, unlock_account, update_password,
     user_has_password, verify_password,
 };
 
@@ -29,6 +29,10 @@ struct PasswdArgs {
     username: String,
 }
 
+fn get_username_unwrap() -> String {
+    get_current_username().unwrap().into_string().unwrap()
+}
+
 #[derive(Args, Clone, Debug)]
 #[group(required = false, multiple = false)]
 struct Operation {
@@ -45,19 +49,15 @@ struct Operation {
     delete: bool,
 }
 
-fn get_username_unwrap() -> String {
-    get_current_username().unwrap().into_string().unwrap()
-}
-
+/// Entry point of program.
 fn main() -> Result<()> {
     // Detect username
     let args = PasswdArgs::parse();
     let username = args.username;
 
-    all_usernames()?
-        .into_iter()
-        .find(|user| user == &username)
-        .ok_or_else(|| Error::msg(format!("user '{}' does not exist", username)))?;
+    if is_valid_user(&username)? {
+        Err(Error::msg(format!("user '{}' does not exist", username)))?;
+    }
 
     println!("Setting password for: {}", username);
 

@@ -27,13 +27,13 @@ fn to64(mut u: u32, mut n: i32) -> Vec<u8> {
     s
 }
 
-pub fn crypt(key: &[u8], salt: &[u8]) -> Result<String> {
-    if salt.starts_with(MD5_SETTING_PREFIX) {
-        md5_crypt(key, salt)
-    } else if salt.starts_with(SHA256_SALT_PREFIX) {
-        sha256_crypt(key, salt) //.ok_or_else(|| Error::msg("Failed to generate SHA256 hash"))
-    } else if salt.starts_with(SHA512_SALT_PREFIX) {
-        sha512_crypt(key, salt)
+pub fn crypt(key: &[u8], setting: &[u8]) -> Result<String> {
+    if setting.starts_with(MD5_SETTING_PREFIX) {
+        md5_crypt(key, setting)
+    } else if setting.starts_with(SHA256_SALT_PREFIX) {
+        sha256_crypt(key, setting)
+    } else if setting.starts_with(SHA512_SALT_PREFIX) {
+        sha512_crypt(key, setting)
     } else {
         // des_crypt(key, salt)
         Err(Error::msg(
