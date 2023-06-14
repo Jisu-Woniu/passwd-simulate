@@ -1,11 +1,13 @@
-use super::BINARY64;
 use std::iter::from_fn;
 
-use rand::seq::SliceRandom;
+use rand::{seq::SliceRandom, CryptoRng, RngCore};
 
-pub(crate) fn make_salt(n: usize) -> Vec<u8> {
-    let mut rng = rand::thread_rng();
+use super::BINARY64;
 
+pub fn make_salt<R>(n: usize, mut rng: R) -> Vec<u8>
+where
+    R: CryptoRng + RngCore,
+{
     from_fn(|| BINARY64.choose(&mut rng).cloned())
         .take(n)
         .collect()
