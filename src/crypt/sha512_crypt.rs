@@ -4,12 +4,7 @@ use anyhow::{Error, Result};
 use digest::Output;
 use sha2::{Digest, Sha512};
 
-use crypt::permute;
-
-use crate::crypt;
-use crate::crypt::to64;
-
-use super::is_safe;
+use super::{is_safe, to64};
 
 pub(crate) const SHA512_SALT_PREFIX: &[u8; 3] = b"$6$";
 const KEY_MAX_LEN: usize = 256;
@@ -175,7 +170,14 @@ fn sha512_crypt_clean(key: &[u8], salt: &[u8], rounds: usize) -> Option<String> 
     ];
     let mut output = Vec::new();
 
-    permute(&md, &mut output, &PERM);
+    {
+        for p in &PERM {
+            output.extend(&to64(
+                ((md[p[0]] as u32) << 16) | ((md[p[1]] as u32) << 8) | (md[p[2]] as u32),
+                4,
+            ))
+        }
+    };
     output.extend(&to64(md[63] as u32, 2));
     String::from_utf8(output).ok()
 }

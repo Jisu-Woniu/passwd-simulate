@@ -3,7 +3,7 @@ use std::str::from_utf8;
 use anyhow::{Error, Result};
 use md5::{Digest, Md5};
 
-use super::{is_safe, permute, to64};
+use super::{is_safe, to64};
 
 pub(crate) const MD5_SETTING_PREFIX: &[u8; 3] = b"$1$";
 pub(crate) const MD5_SETTING_PREFIX_STR: &str = "$1$";
@@ -73,7 +73,12 @@ fn md5_crypt_clean(key: &[u8], salt: &[u8]) -> Option<String> {
     const PERM: [[usize; 3]; 5] = [[0, 6, 12], [1, 7, 13], [2, 8, 14], [3, 9, 15], [4, 10, 5]];
     let mut output = Vec::new();
 
-    permute(&md, &mut output, &PERM);
+    for p in &PERM {
+        output.extend(&to64(
+            ((md[p[0]] as u32) << 16) | ((md[p[1]] as u32) << 8) | (md[p[2]] as u32),
+            4,
+        ))
+    }
 
     output.extend(&to64(md[11] as u32, 2));
     String::from_utf8(output).ok()

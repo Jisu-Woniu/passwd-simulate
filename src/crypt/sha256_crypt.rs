@@ -4,7 +4,7 @@ use anyhow::{Error, Result};
 use digest::Output;
 use sha2::{Digest, Sha256};
 
-use crate::crypt::{is_safe, permute, to64};
+use crate::crypt::{is_safe, to64};
 
 pub(crate) const SHA256_SALT_PREFIX: &[u8; 3] = b"$5$";
 const KEY_MAX_LEN: usize = 256;
@@ -162,7 +162,13 @@ fn sha256_crypt_clean(key: &[u8], salt: &[u8], rounds: usize) -> Option<String> 
     ];
     let mut output = Vec::new();
 
-    permute(&md, &mut output, &PERM);
+    for p in &PERM {
+        output.extend(&to64(
+            ((md[p[0]] as u32) << 16) | ((md[p[1]] as u32) << 8) | (md[p[2]] as u32),
+            4,
+        ))
+    }
+
     output.extend(&to64(((md[31] as u32) << 8) | (md[30] as u32), 3));
     String::from_utf8(output).ok()
 }

@@ -41,12 +41,3 @@ pub fn crypt(key: &[u8], salt: &[u8]) -> Result<String> {
         ))
     }
 }
-
-fn permute(md: &[u8], output: &mut Vec<u8>, perm: &[[usize; 3]]) {
-    for p in perm {
-        output.extend(&to64(
-            ((md[p[0]] as u32) << 16) | ((md[p[1]] as u32) << 8) | (md[p[2]] as u32),
-            4,
-        ))
-    }
-}
