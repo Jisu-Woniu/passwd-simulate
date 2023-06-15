@@ -75,8 +75,6 @@ impl Display for Shadow {
     }
 }
 
-// static EPOCH_DATE: NaiveDate = NaiveDate::from_ymd_opt(1970, 1, 1).unwrap();
-
 fn epoch_date() -> NaiveDate {
     NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
 }
