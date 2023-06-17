@@ -8,6 +8,7 @@ use std::{
 use anyhow::{Error, Result};
 
 use shadow::Shadow;
+use users::get_current_uid;
 
 use crate::crypt::crypt;
 
@@ -81,6 +82,9 @@ pub fn update_password(username: &str, hashed_password: &str) -> Result<()> {
 
 /// Lock account by changing password in the shadow file.
 pub fn lock_account(username: &str) -> Result<()> {
+    if get_current_uid() != 0 {
+        Err(Error::msg("Only superuser can lock accounts."))?
+    }
     let mut shadow_items: Vec<_> = read_shadow()?.into_iter().collect();
     let shadow_item = shadow_items
         .iter_mut()
@@ -98,6 +102,9 @@ pub fn lock_account(username: &str) -> Result<()> {
 
 /// Unlock account by changing password in the shadow file.
 pub fn unlock_account(username: &str) -> Result<()> {
+    if get_current_uid() != 0 {
+        Err(Error::msg("Only superuser can unlock accounts."))?
+    }
     let mut shadow_items: Vec<_> = read_shadow()?.into_iter().collect();
     let shadow_item = shadow_items
         .iter_mut()
@@ -115,6 +122,9 @@ pub fn unlock_account(username: &str) -> Result<()> {
 
 /// Delete a user's password in the shadow file.
 pub fn delete_password(username: &str) -> Result<()> {
+    if get_current_uid() != 0 {
+        Err(Error::msg("Only superuser can delete accounts."))?
+    }
     let mut shadow_items: Vec<_> = read_shadow()?.into_iter().collect();
     let shadow_item = shadow_items
         .iter_mut()
@@ -129,7 +139,6 @@ pub fn delete_password(username: &str) -> Result<()> {
 pub fn is_valid_user(username: &str) -> Result<bool> {
     Ok(read_shadow()?
         .into_iter()
-        .map(|item| item.username)
-        .find(|user| user == username)
+        .find(|user| user.username == username)
         .is_some())
 }

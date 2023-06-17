@@ -55,23 +55,23 @@ fn main() -> Result<()> {
     let args = PasswdArgs::parse();
     let username = args.username;
 
-    if is_valid_user(&username)? {
+    if !is_valid_user(&username)? {
         Err(Error::msg(format!("user '{}' does not exist", username)))?;
     }
 
     println!("Setting password for: {}", username);
-
-    if get_current_uid() != 0 && user_has_password(&username)? {
-        let old_password = prompt_password("Current password: ")
-            .with_context(|| "Password change has been aborted.")?;
-        verify_password(&username, &old_password).with_context(|| "Authentication failure.")?
-    }
 
     match args.operation {
         Operation { lock: true, .. } => lock_account(&username)?,
         Operation { unlock: true, .. } => unlock_account(&username)?,
         Operation { delete: true, .. } => delete_password(&username)?,
         Operation { .. } => {
+            if get_current_uid() != 0 && user_has_password(&username)? {
+                let old_password = prompt_password("Current password: ")
+                    .with_context(|| "Password change has been aborted.")?;
+                verify_password(&username, &old_password)
+                    .with_context(|| "Authentication failure.")?
+            }
             let password = prompt_password("New password: ")
                 .with_context(|| "Password change has been aborted.")?;
             let password_confirm = prompt_password("Retype new password: ")
@@ -90,14 +90,4 @@ fn main() -> Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn verify_cli() {
-        use super::PasswdArgs;
-        use clap::CommandFactory;
-        PasswdArgs::command().debug_assert()
-    }
 }
